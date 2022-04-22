@@ -52,9 +52,13 @@ public class FinerGitRewriter extends RepositoryRewriter {
       result.add(entry);
     }
     for (final FinerJavaModule m : extractFinerModules(entry, c)) {
-      final String finerSource = // 最終行に改行を入れないと途中行とのマッチングが正しく行われない
-          String.join(System.lineSeparator(), m.getLines()) + System.lineSeparator();
-      final ObjectId newId = target.writeBlob(finerSource.getBytes(StandardCharsets.UTF_8), c);
+      // 最終行に改行を入れないと途中行とのマッチングが正しく行われない - Adding lines delimiter
+      //Following stirngs are constructing package and class declaration on top of each module
+      final String tabSpace = "  ";
+      final String scopeStart = "package finergit;" + System.lineSeparator() + "public class FinerGit {" + System.lineSeparator() + tabSpace;
+      final String scopeEnd = System.lineSeparator() + "}";
+      final String moduleScope = scopeStart + String.join(System.lineSeparator() + "  ", m.getLines()) + scopeEnd;
+      final ObjectId newId = target.writeBlob(moduleScope.getBytes(StandardCharsets.UTF_8), c);
       final String name = m.getFileName();
       log.debug("Generate finer module: {} -> {} {} {}", entry, name, newId.name(), c);
       result.add(new Entry(entry.mode, name, newId, entry.directory));
